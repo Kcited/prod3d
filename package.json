@@ -1,0 +1,20 @@
+{
+  "name": "product-configurator",
+  "version": "1.0.0",
+  "description": "A simple product configurator using Three.js and Express.js",
+  "main": "server/src/app.ts",
+  "scripts": {
+    "client": "cd client && npm install && npm run dev",
+    "server": "cd server && npm install && npm run start",
+    "dev": "concurrently \"npm run client\" \"npm run server\""
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "concurrently": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
