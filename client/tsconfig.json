@@ -3,6 +3,7 @@
     "target": "ES6",
     "module": "ESNext",
     "strict": true,
+    "types": ["vite/client"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
