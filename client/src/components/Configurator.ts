@@ -8,6 +8,7 @@ export class Configurator {
   private renderer: THREE.WebGLRenderer;
   private controls: OrbitControls;
   private model: THREE.Group | null = null;
+  private handleVariations: Map<string, THREE.Object3D[]> = new Map();
 
   constructor(container: HTMLElement) {
     // Initialize scene
@@ -55,7 +56,7 @@ export class Configurator {
     // It allows you to use relative paths that work in both environments
     // This is a common practice in modern web development to ensure assets are correctly loaded
     // when the application is built and deployed
-    this.loadModel(import.meta.env.BASE_URL + "models/product.gltf");
+    this.loadModel(import.meta.env.BASE_URL + "models/screwdriver.glb");
   }
 
   public loadModel(
@@ -64,6 +65,7 @@ export class Configurator {
       color?: string;
       modelScale?: number[];
       cameraPosition?: number[];
+      visibleHandleVariations?: string[];
     }
   ): void {
     const loader = new GLTFLoader();
@@ -74,6 +76,9 @@ export class Configurator {
 
       this.model = gltf.scene;
       this.scene.add(this.model);
+
+      // Discover handle variations after loading the model
+      this.discoverHandleVariations();
 
       // Center model
       const box = new THREE.Box3().setFromObject(this.model);
@@ -109,6 +114,19 @@ export class Configurator {
         const distance = sphere.radius / Math.sin(fov / 2);
         this.camera.position.z = distance;
         this.camera.updateProjectionMatrix();
+      }
+
+      // Apply saved handle variations if provided, otherwise show first handle as default
+      if (config?.visibleHandleVariations) {
+        // First hide all handles
+        this.hideAllHandles();
+        // Then show only the saved variations
+        config.visibleHandleVariations.forEach((variation) => {
+          this.showHandleVariation(variation);
+        });
+      } else {
+        // Show first handle variation as default
+        this.showDefaultHandle();
       }
     });
   }
@@ -203,5 +221,164 @@ export class Configurator {
       cameraPosition,
       modelScale,
     };
+  }
+
+  // Discover and categorize handle variations in the loaded model
+  // This method should be called after loading a model to find all handle meshes
+  public discoverHandleVariations(): string[] {
+    if (!this.model) return [];
+
+    this.handleVariations.clear();
+    const handleTypes: string[] = [];
+
+    this.model.traverse((child) => {
+      if (child.name && child.name.toLowerCase().includes("handle")) {
+        // Extract handle type from name (e.g., "Handle_Type1", "Handle_Curved", etc.)
+        const handleType = this.extractHandleType(child.name);
+
+        if (!this.handleVariations.has(handleType)) {
+          this.handleVariations.set(handleType, []);
+          handleTypes.push(handleType);
+        }
+
+        this.handleVariations.get(handleType)?.push(child);
+      }
+    });
+
+    console.log("Discovered handle variations:", handleTypes);
+    console.log("Handle variations map:", this.handleVariations);
+
+    return handleTypes;
+  }
+
+  // Extract handle type from mesh name
+  // You can customize this logic based on your model's naming convention
+  private extractHandleType(meshName: string): string {
+    // Common patterns for handle naming:
+    // "Handle_Type1" -> "Type1"
+    // "Handle_Curved" -> "Curved"
+    // "HandleStraight" -> "Straight"
+    // "handle_variation_2" -> "variation_2"
+
+    const name = meshName.toLowerCase();
+
+    // Remove common prefixes
+    let handleType = name
+      .replace(/^handle[_-]?/i, "")
+      .replace(/[_-]?handle$/i, "");
+
+    // If no specific type found, use the full name minus "handle"
+    if (!handleType || handleType === name.toLowerCase()) {
+      handleType = meshName.replace(/handle/i, "").replace(/^[_-]|[_-]$/g, "");
+    }
+
+    // If still empty, use index-based naming
+    if (!handleType) {
+      handleType = `variation_${this.handleVariations.size + 1}`;
+    }
+
+    return handleType || "default";
+  }
+
+  // Show only the specified handle variation and hide all others
+  public showHandleVariation(handleType: string): boolean {
+    if (!this.model || !this.handleVariations.has(handleType)) {
+      console.warn(`Handle variation '${handleType}' not found`);
+      return false;
+    }
+
+    // Hide all handle variations first
+    this.handleVariations.forEach((meshes) => {
+      meshes.forEach((mesh) => {
+        mesh.visible = false;
+      });
+    });
+
+    // Show only the selected variation
+    const selectedHandles = this.handleVariations.get(handleType);
+    if (selectedHandles) {
+      selectedHandles.forEach((mesh) => {
+        mesh.visible = true;
+      });
+      console.log(`Showing handle variation: ${handleType}`);
+      return true;
+    }
+
+    return false;
+  }
+
+  // Hide all handle variations
+  public hideAllHandles(): void {
+    this.handleVariations.forEach((meshes) => {
+      meshes.forEach((mesh) => {
+        mesh.visible = false;
+      });
+    });
+    console.log("All handles hidden");
+  }
+
+  // Show all handle variations
+  public showAllHandles(): void {
+    this.handleVariations.forEach((meshes) => {
+      meshes.forEach((mesh) => {
+        mesh.visible = true;
+      });
+    });
+    console.log("All handles shown");
+  }
+
+  // Get list of available handle variations
+  public getAvailableHandleVariations(): string[] {
+    return Array.from(this.handleVariations.keys());
+  }
+
+  // Check if a handle variation is currently visible
+  public isHandleVariationVisible(handleType: string): boolean {
+    const handles = this.handleVariations.get(handleType);
+    if (!handles || handles.length === 0) return false;
+
+    return handles.some((mesh) => mesh.visible);
+  }
+
+  // Get currently visible handle variations
+  public getVisibleHandleVariations(): string[] {
+    const visible: string[] = [];
+
+    this.handleVariations.forEach((meshes, handleType) => {
+      if (meshes.some((mesh) => mesh.visible)) {
+        visible.push(handleType);
+      }
+    });
+
+    return visible;
+  }
+
+  // Show the default handle (first available handle variation or specific "handle 1")
+  private showDefaultHandle(): void {
+    const availableHandles = this.getAvailableHandleVariations();
+
+    if (availableHandles.length > 0) {
+      // Hide all handles first
+      this.hideAllHandles();
+
+      // Try to find "handle 1" or similar first
+      let defaultHandle = availableHandles.find(
+        (handle) =>
+          handle.toLowerCase().includes("1") ||
+          handle.toLowerCase().includes("one") ||
+          handle.toLowerCase() === "default"
+      );
+
+      // If no "handle 1" found, use the first available
+      if (!defaultHandle) {
+        defaultHandle = availableHandles[0];
+      }
+
+      this.showHandleVariation(defaultHandle);
+
+      console.log(`Showing default handle variation: ${defaultHandle}`);
+    } else {
+      console.log("No handle variations found to set as default");
+    }
   }
 }

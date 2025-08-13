@@ -23,6 +23,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     container.appendChild(colorButtons);
 
+    // Handle variation controls - will be populated after model loads
+    const handleControls = document.createElement("div");
+    handleControls.className = "handle-controls";
+    handleControls.innerHTML = "<h3>Handle Variations</h3>";
+    container.appendChild(handleControls);
+
+    // Function to setup handle controls after model loads
+    const setupHandleControls = () => {
+      const variations = configurator.getAvailableHandleVariations();
+
+      // Clear existing handle buttons
+      const existingButtons = handleControls.querySelectorAll("button");
+      existingButtons.forEach((btn) => btn.remove());
+
+      if (variations.length > 0) {
+        // Add button to show all handles
+        const showAllBtn = document.createElement("button");
+        showAllBtn.textContent = "Show All";
+        showAllBtn.onclick = () => configurator.showAllHandles();
+        handleControls.appendChild(showAllBtn);
+
+        // Add button to hide all handles
+        const hideAllBtn = document.createElement("button");
+        hideAllBtn.textContent = "Hide All";
+        hideAllBtn.onclick = () => configurator.hideAllHandles();
+        handleControls.appendChild(hideAllBtn);
+
+        // Add buttons for each variation
+        variations.forEach((variation) => {
+          const button = document.createElement("button");
+          button.textContent = `Show ${variation}`;
+          button.onclick = () => configurator.showHandleVariation(variation);
+          handleControls.appendChild(button);
+        });
+      } else {
+        const noHandlesMsg = document.createElement("p");
+        noHandlesMsg.textContent = "No handle variations found";
+        handleControls.appendChild(noHandlesMsg);
+      }
+    };
+
+    // Setup handle controls after a short delay to ensure model is loaded
+    setTimeout(setupHandleControls, 1000);
+
     // Save configuration button
     const saveBtn = document.createElement("button");
     saveBtn.id = "save-btn";
@@ -39,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         color: configurator.getCurrentColor(),
         cameraPosition,
         modelScale,
+        visibleHandleVariations: configurator.getVisibleHandleVariations(),
         // Add more settings like rotation, environment, lighting etc. later
       };
 
@@ -75,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
           color: config.color,
           modelScale: config.modelScale,
           cameraPosition: config.cameraPosition,
+          visibleHandleVariations: config.visibleHandleVariations,
         });
 
         console.log(`Loaded last saved configuration ID: ${lastId}`);

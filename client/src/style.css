@@ -1,26 +1,71 @@
 #app {
-	width: 100vw;
-	height: 100vh;
-	position: relative;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
 }
 
 .color-controls {
-	position: absolute;
-	bottom: 20px;
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
-	gap: 10px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
 }
 
 .color-controls button {
-	width: 40px;
-	height: 40px;
-	border: none;
-	border-radius: 50%;
-	cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 .color-controls button:hover {
-	transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+.handle-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+}
+
+.handle-controls h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.handle-controls button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.handle-controls button:hover {
+  background: #e0e0e0;
+}
+
+.handle-controls button:active {
+  background: #d0d0d0;
+}
+
+.handle-controls p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
 }
